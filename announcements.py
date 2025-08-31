@@ -4,6 +4,8 @@ from datetime import datetime
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import schedule
+import time
 
 # ========================
 # CONFIG
@@ -11,7 +13,6 @@ from email.mime.multipart import MIMEMultipart
 # Email setup
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-
 SENDER_EMAIL = "drsaritachopra@gmail.com"
 SENDER_PASS = "syfu poue nntf ggfg"  # Gmail App Password
 RECEIVER_EMAIL = "praveencdli@gmail.com"
@@ -94,7 +95,8 @@ def send_email_alert(announcements):
 # ========================
 # MAIN
 # ========================
-def main():
+def job():
+    print("⏰ Running scheduled check at", datetime.now().strftime("%H:%M:%S"))
     nse_data = fetch_nse_announcements()
     bse_data = fetch_bse_announcements()
 
@@ -103,3 +105,19 @@ def main():
     if all_announcements:
         df = pd.DataFrame(all_announcements)
         df.to_csv("announcements_today.csv", index=False)
+        print(df)
+        send_email_alert(all_announcements)
+    else:
+        print("No important announcements found today.")
+
+def main():
+    # Schedule at 7AM daily
+    schedule.every().day.at("07:00").do(job)
+
+    print("✅ Scheduler started, waiting for 7AM daily checks...")
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
+
+if __name__ == "__main__":
+    main()
